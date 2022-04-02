@@ -1,8 +1,9 @@
 package fta;
 
+import java.io.Serializable;
 import java.util.Date;
 
-public class Day {
+public class Day implements Serializable {
 
 	private final int steps;
 	private final int heartRate;

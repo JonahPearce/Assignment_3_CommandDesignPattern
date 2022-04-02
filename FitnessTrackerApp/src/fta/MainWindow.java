@@ -1,5 +1,6 @@
 package fta;
 
+import java.io.IOException;
 import java.text.ParseException;
 import java.util.ArrayList;
 import org.eclipse.swt.widgets.Display;
@@ -13,10 +14,16 @@ public class MainWindow {
 	 * Launch the application.
 	 * @param args
 	 * @throws ParseException 
+	 * @throws IOException 
+	 * @throws ClassNotFoundException 
 	 */
-	public static void main(String[] args) throws ParseException {
+	public static void main(String[] args) throws ParseException, ClassNotFoundException, IOException {
 		
 		ArrayList<Day> dayArrayList = new ArrayList<>();
+		
+		FileIO fileIO = new FileIO();
+		
+		dayArrayList = fileIO.fileReader("Data.txt");
 		
 		//Creating new data
 		
@@ -57,7 +64,7 @@ public class MainWindow {
 		}
 		
 		
-		
+		fileIO.fileWriter("Data.txt", dayArrayList);
 		
 		
 		
