@@ -1,5 +1,7 @@
 package fta;
 
+import java.text.ParseException;
+import java.util.ArrayList;
 import org.eclipse.swt.widgets.Display;
 import org.eclipse.swt.widgets.Shell;
 
@@ -10,14 +12,67 @@ public class MainWindow {
 	/**
 	 * Launch the application.
 	 * @param args
+	 * @throws ParseException 
 	 */
-	public static void main(String[] args) {
+	public static void main(String[] args) throws ParseException {
+		
+		ArrayList<Day> dayArrayList = new ArrayList<>();
+		
+		//Creating new data
+		
+		DayBuilder dayBuilder = new DayBuilder();
+		
+		dayBuilder.setSteps(1000).setHeartRate(80).setSleep(7.5).setDate("04/01/2022");
+		
+		Day day = dayBuilder.buildDay();
+		
+		dayArrayList.add(day);
+		
+		DayBuilder dayBuilder2 = new DayBuilder();
+		
+		dayBuilder2.setSteps(10000).setHeartRate(60).setSleep(4.5).setDate("04/05/2022");
+		
+		Day day2 = dayBuilder2.buildDay();
+		
+		dayArrayList.add(day2);
+		
+		DayBuilder dayBuilder3 = new DayBuilder();
+		
+		dayBuilder3.setSteps(5000).setHeartRate(70).setSleep(8.0).setDate("04/03/2022");
+		
+		Day day3 = dayBuilder3.buildDay();
+		
+		dayArrayList.add(day3);
+		
+		
+		// Use the data
+		DayIteratorClass dayIteratorClass = new DayIteratorClass(dayArrayList);
+
+		Iterator dayIterator = dayIteratorClass.iterator();
+		//java.util.Iterator<Day> arrayListIterartor = dayArrayList.iterator();
+		
+
+		while (dayIterator.hasLast()) {
+			System.out.println(dayIterator.last().toString());
+		}
+		
+		
+		
+		
+		
+		
+		
+		
+		
 		try {
 			MainWindow window = new MainWindow();
 			window.open();
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
+		
+		
+		
 	}
 
 	/**
@@ -41,7 +96,7 @@ public class MainWindow {
 	protected void createContents() {
 		shell = new Shell();
 		shell.setSize(450, 300);
-		shell.setText("SWT Application");
+		shell.setText("Fitness Tracker");
 
 	}
 
