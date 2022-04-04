@@ -5,10 +5,19 @@ import java.text.ParseException;
 import java.util.ArrayList;
 import org.eclipse.swt.widgets.Display;
 import org.eclipse.swt.widgets.Shell;
+import org.eclipse.wb.swt.SWTResourceManager;
+import org.eclipse.swt.SWT;
+import org.eclipse.swt.widgets.Table;
+import org.eclipse.jface.viewers.TableViewer;
+import org.eclipse.swt.widgets.Text;
+import org.eclipse.swt.widgets.Button;
+import org.eclipse.swt.widgets.Label;
 
 public class MainWindow {
 
 	protected Shell shell;
+	private Text txtTheFitnessTracker;
+	private Text txtJjjjjj;
 
 	/**
 	 * Launch the application.
@@ -19,11 +28,19 @@ public class MainWindow {
 	 */
 	public static void main(String[] args) throws ParseException, ClassNotFoundException, IOException {
 		
-		ArrayList<Day> dayArrayList = new ArrayList<>();
+		AverageCalculator averageCalculator = new AverageCalculator();
+		
+		Average weeklyAverage = new Average(averageCalculator, 7);
+		Average monthlyAverage = new Average(averageCalculator, 30);
+		Average yearlyAverage = new Average(averageCalculator, 365);
+		
+		averageCalculator.registerObserver(weeklyAverage);
+		averageCalculator.registerObserver(monthlyAverage);
+		averageCalculator.registerObserver(weeklyAverage);
 		
 		FileIO fileIO = new FileIO();
 		
-		dayArrayList = fileIO.fileReader("Data.txt");
+		averageCalculator.setDays(FileIO.fileReader("Data.txt"));
 		
 		//Creating new data
 		
@@ -33,7 +50,7 @@ public class MainWindow {
 		
 		Day day = dayBuilder.buildDay();
 		
-		dayArrayList.add(day);
+		averageCalculator.addDay(day);
 		
 		DayBuilder dayBuilder2 = new DayBuilder();
 		
@@ -41,7 +58,7 @@ public class MainWindow {
 		
 		Day day2 = dayBuilder2.buildDay();
 		
-		dayArrayList.add(day2);
+		averageCalculator.addDay(day2);
 		
 		DayBuilder dayBuilder3 = new DayBuilder();
 		
@@ -49,11 +66,11 @@ public class MainWindow {
 		
 		Day day3 = dayBuilder3.buildDay();
 		
-		dayArrayList.add(day3);
+		averageCalculator.addDay(day3);
 		
 		
 		// Use the data
-		DayIteratorClass dayIteratorClass = new DayIteratorClass(dayArrayList);
+		DayIteratorClass dayIteratorClass = new DayIteratorClass(averageCalculator.getDays());
 
 		Iterator dayIterator = dayIteratorClass.iterator();
 		//java.util.Iterator<Day> arrayListIterartor = dayArrayList.iterator();
@@ -63,8 +80,11 @@ public class MainWindow {
 			System.out.println(dayIterator.last().toString());
 		}
 		
+		System.out.println(weeklyAverage.getAverageSteps());
+		System.out.println(monthlyAverage.getAverageSteps());
+		System.out.println(yearlyAverage.getAverageSteps());
 		
-		fileIO.fileWriter("Data.txt", dayArrayList);
+		FileIO.fileWriter("Data.txt", averageCalculator.getDays());
 		
 		
 		
@@ -102,9 +122,9 @@ public class MainWindow {
 	 */
 	protected void createContents() {
 		shell = new Shell();
-		shell.setSize(450, 300);
+		shell.setBackground(SWTResourceManager.getColor(SWT.COLOR_DARK_CYAN));
+		shell.setSize(1329, 807);
 		shell.setText("Fitness Tracker");
 
 	}
-
 }

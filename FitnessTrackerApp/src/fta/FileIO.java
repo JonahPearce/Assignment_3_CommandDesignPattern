@@ -16,7 +16,7 @@ public class FileIO {
 	public static ArrayList<Day> fileReader(String filename) throws IOException, ClassNotFoundException {
 
 		ArrayList<Day> dayArrayList = new ArrayList<>();
-		
+		try {
 		FileInputStream readfile = new FileInputStream(new File(filename));
 		ObjectInputStream input = new ObjectInputStream(readfile);
 
@@ -29,7 +29,11 @@ public class FileIO {
 		input.close();
 		readfile.close();		
 		
-		return dayArrayList; 
+		} catch (Exception e) {
+			System.out.println("No file");
+			
+		}
+		return dayArrayList;
 	}
 	
 	public static void fileWriter(String filename, ArrayList<Day> dayArrayList) throws IOException {
