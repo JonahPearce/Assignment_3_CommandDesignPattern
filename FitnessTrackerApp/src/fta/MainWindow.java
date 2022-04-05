@@ -4,26 +4,30 @@ import java.awt.Dimension;
 import java.awt.Toolkit;
 import java.io.IOException;
 import java.text.ParseException;
-import java.util.ArrayList;
 import org.eclipse.swt.widgets.Display;
 import org.eclipse.swt.widgets.Shell;
 import org.eclipse.wb.swt.SWTResourceManager;
+
+import com.ibm.icu.text.SimpleDateFormat;
+
 import org.eclipse.swt.SWT;
-import org.eclipse.swt.widgets.Table;
-import org.eclipse.jface.viewers.TableViewer;
 import org.eclipse.swt.widgets.Text;
 import org.eclipse.swt.widgets.Button;
 import org.eclipse.swt.widgets.Label;
-import org.eclipse.swt.layout.GridLayout;
-import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.widgets.ProgressBar;
+import org.eclipse.swt.events.SelectionAdapter;
+import org.eclipse.swt.events.SelectionEvent;
 
 public class MainWindow {
 
 	protected Shell FitnessTracker;
+	protected Shell History;
 	private Text txtTheFitnessTracker;
 	private Text txtJjjjjj;
+	private Day Goals;
+	private Boolean Exit = false;
 
+	
 	/**
 	 * Launch the application.
 	 * @param args
@@ -31,7 +35,42 @@ public class MainWindow {
 	 * @throws IOException 
 	 * @throws ClassNotFoundException 
 	 */
-	public static void main(String[] args) throws ParseException, ClassNotFoundException, IOException {
+	public static void main(String[] args) {
+
+		try {
+			MainWindow window = new MainWindow();
+			window.open();
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+
+	}
+
+	/**
+	 * Open the window.
+	 * @throws IOException 
+	 * @throws ClassNotFoundException 
+	 */
+	public void open()  throws ParseException, ClassNotFoundException, IOException {
+		
+		InterfaceRemoteControl interfaceRemoteControl = new InterfaceRemoteControl();
+		
+		BarDisplay barDisplay = new BarDisplay();
+		
+		BarDisplayOnCommand barDisplayOnCommand = new BarDisplayOnCommand(barDisplay);
+		BarDisplayOffCommand barDisplayOffCommand = new BarDisplayOffCommand(barDisplay);
+		
+		interfaceRemoteControl.setCommand(barDisplayOnCommand, barDisplayOffCommand);
+		
+		
+		DayBuilder dayBuilderGoals = new DayBuilder();
+		
+		dayBuilderGoals.setSteps(10000).setHeartRate(80).setSleep(8.0);
+
+		
+		Goals = dayBuilderGoals.buildDay();
+		
+		//Data Setup
 		
 		AverageCalculator averageCalculator = new AverageCalculator();
 		
@@ -47,85 +86,18 @@ public class MainWindow {
 		
 		averageCalculator.setDays(FileIO.fileReader("Data.txt"));
 		
-		//Creating new data
-		
-		DayBuilder dayBuilder = new DayBuilder();
-		
-		dayBuilder.setSteps(1000).setHeartRate(80).setSleep(7.5).setDate("04/01/2022");
-		
-		Day day = dayBuilder.buildDay();
-		
-		averageCalculator.addDay(day);
-		
-		DayBuilder dayBuilder2 = new DayBuilder();
-		
-		dayBuilder2.setSteps(10000).setHeartRate(60).setSleep(4.5).setDate("04/05/2022");
-		
-		Day day2 = dayBuilder2.buildDay();
-		
-		averageCalculator.addDay(day2);
-		
-		DayBuilder dayBuilder3 = new DayBuilder();
-		
-		dayBuilder3.setSteps(5000).setHeartRate(70).setSleep(8.0).setDate("04/03/2022");
-		
-		Day day3 = dayBuilder3.buildDay();
-		
-		averageCalculator.addDay(day3);
-		
-		
-		// Use the data
-		DayIteratorClass dayIteratorClass = new DayIteratorClass(averageCalculator.getDays());
-
-		Iterator dayIterator = dayIteratorClass.iterator();
-		//java.util.Iterator<Day> arrayListIterartor = dayArrayList.iterator();
-		
-
-		while (dayIterator.hasLast()) {
-			System.out.println(dayIterator.last().toString());
+		if (averageCalculator.getDays().size()<=0) {
+			DayBuilder dayBuilder = new DayBuilder();
+			
+			dayBuilder.setSteps(10000).setHeartRate(80).setSleep(8.0).setDate("2022/01/01");
+			averageCalculator.addDay(dayBuilder.buildDay());
 		}
 		
-		System.out.println(weeklyAverage.getAverageSteps());
-		System.out.println(monthlyAverage.getAverageSteps());
-		System.out.println(yearlyAverage.getAverageSteps());
-		
-		FileIO.fileWriter("Data.txt", averageCalculator.getDays());
-		
-		
-		
-		
-		
-		
-		try {
-			MainWindow window = new MainWindow();
-			window.open();
-		} catch (Exception e) {
-			e.printStackTrace();
-		}
-		
-		
-		
-	}
 
-	/**
-	 * Open the window.
-	 */
-	public void open() {
+		//Display Setting
+		
+		
 		Display display = Display.getDefault();
-		createContents();
-		FitnessTracker.open();
-		FitnessTracker.layout();
-		while (!FitnessTracker.isDisposed()) {
-			if (!display.readAndDispatch()) {
-				display.sleep();
-			}
-		}
-	}
-
-	/**
-	 * Create contents of the window.
-	 */
-	protected void createContents() {
 		FitnessTracker = new Shell();
 		FitnessTracker.setBackground(SWTResourceManager.getColor(SWT.COLOR_CYAN));
 		
@@ -133,6 +105,14 @@ public class MainWindow {
 		
 		FitnessTracker.setSize(1920, 1080);
 		FitnessTracker.setText("Fitness Tracker");
+		FitnessTracker.open();
+		FitnessTracker.layout();
+		
+		History = new Shell();
+		
+		History.setBackground(SWTResourceManager.getColor(SWT.COLOR_CYAN));
+		History.setSize(1920, 1080);
+		History.setText("Fitness Tracker - History");
 		
 		Label imageSteps = new Label(FitnessTracker, SWT.NONE);
 		imageSteps.setBackground(SWTResourceManager.getColor(SWT.COLOR_TRANSPARENT));
@@ -174,7 +154,7 @@ public class MainWindow {
 		textFitnessTracker.setBounds(756, 10, 368, 60);
 		
 		ProgressBar progressBarWeeklySteps = new ProgressBar(FitnessTracker, SWT.NONE);
-		progressBarWeeklySteps.setSelection(10);
+		progressBarWeeklySteps.setSelection(50);
 		progressBarWeeklySteps.setBounds(326, 397, 233, 15);
 		
 		Label textYearly = new Label(FitnessTracker, SWT.NONE);
@@ -319,30 +299,30 @@ public class MainWindow {
 		
 		Label todayName = new Label(FitnessTracker, SWT.NONE);
 		todayName.setText("Today");
-		todayName.setFont(SWTResourceManager.getFont("Ubuntu", 30, SWT.NORMAL));
+		todayName.setFont(SWTResourceManager.getFont("Ubuntu", 20, SWT.NORMAL));
 		todayName.setBackground(SWTResourceManager.getColor(SWT.COLOR_TRANSPARENT));
-		todayName.setBounds(98, 636, 115, 60);
+		todayName.setBounds(113, 654, 91, 39);
 		
 		Label varTodayDate = new Label(FitnessTracker, SWT.NONE);
-		varTodayDate.setText("Date: April 4th, 2022");
+		varTodayDate.setText("Date: N/A");
 		varTodayDate.setFont(SWTResourceManager.getFont("Ubuntu", 15, SWT.NORMAL));
 		varTodayDate.setBackground(SWTResourceManager.getColor(SWT.COLOR_TRANSPARENT));
 		varTodayDate.setBounds(63, 702, 182, 24);
 		
 		Label varTodaySteps = new Label(FitnessTracker, SWT.NONE);
-		varTodaySteps.setText("Steps: 10,000");
+		varTodaySteps.setText("Steps: N/A");
 		varTodaySteps.setFont(SWTResourceManager.getFont("Ubuntu", 15, SWT.NORMAL));
 		varTodaySteps.setBackground(SWTResourceManager.getColor(SWT.COLOR_TRANSPARENT));
 		varTodaySteps.setBounds(87, 737, 131, 24);
 		
 		Label varTodayHeartrate = new Label(FitnessTracker, SWT.NONE);
-		varTodayHeartrate.setText("Heartrate: 80");
+		varTodayHeartrate.setText("Heartrate: N/A");
 		varTodayHeartrate.setFont(SWTResourceManager.getFont("Ubuntu", 15, SWT.NORMAL));
 		varTodayHeartrate.setBackground(SWTResourceManager.getColor(SWT.COLOR_TRANSPARENT));
 		varTodayHeartrate.setBounds(87, 816, 131, 24);
 		
 		Label varTodaySleep = new Label(FitnessTracker, SWT.NONE);
-		varTodaySleep.setText("Sleep: 8");
+		varTodaySleep.setText("Sleep: N/A");
 		varTodaySleep.setFont(SWTResourceManager.getFont("Ubuntu", 15, SWT.NORMAL));
 		varTodaySleep.setBackground(SWTResourceManager.getColor(SWT.COLOR_TRANSPARENT));
 		varTodaySleep.setBounds(87, 891, 131, 24);
@@ -360,19 +340,19 @@ public class MainWindow {
 		progressBarTodaySleep.setBounds(80, 932, 148, 15);
 		
 		Label todayName_1 = new Label(FitnessTracker, SWT.NONE);
-		todayName_1.setText("Today");
-		todayName_1.setFont(SWTResourceManager.getFont("Ubuntu", 30, SWT.NORMAL));
+		todayName_1.setText("3 Days Ago");
+		todayName_1.setFont(SWTResourceManager.getFont("Ubuntu", 20, SWT.NORMAL));
 		todayName_1.setBackground(SWTResourceManager.getColor(SWT.COLOR_TRANSPARENT));
-		todayName_1.setBounds(887, 636, 115, 60);
+		todayName_1.setBounds(867, 654, 159, 39);
 		
 		Label varTodayDate_1 = new Label(FitnessTracker, SWT.NONE);
-		varTodayDate_1.setText("Date: April 4th, 2022");
+		varTodayDate_1.setText("Date: N/A");
 		varTodayDate_1.setFont(SWTResourceManager.getFont("Ubuntu", 15, SWT.NORMAL));
 		varTodayDate_1.setBackground(SWTResourceManager.getColor(SWT.COLOR_TRANSPARENT));
 		varTodayDate_1.setBounds(852, 702, 182, 24);
 		
 		Label varTodaySteps_1 = new Label(FitnessTracker, SWT.NONE);
-		varTodaySteps_1.setText("Steps: 10,000");
+		varTodaySteps_1.setText("Steps: N/A");
 		varTodaySteps_1.setFont(SWTResourceManager.getFont("Ubuntu", 15, SWT.NORMAL));
 		varTodaySteps_1.setBackground(SWTResourceManager.getColor(SWT.COLOR_TRANSPARENT));
 		varTodaySteps_1.setBounds(876, 737, 131, 24);
@@ -382,7 +362,7 @@ public class MainWindow {
 		progressBarTodaySteps_1.setBounds(869, 780, 148, 15);
 		
 		Label varTodayHeartrate_1 = new Label(FitnessTracker, SWT.NONE);
-		varTodayHeartrate_1.setText("Heartrate: 80");
+		varTodayHeartrate_1.setText("Heartrate: N/A");
 		varTodayHeartrate_1.setFont(SWTResourceManager.getFont("Ubuntu", 15, SWT.NORMAL));
 		varTodayHeartrate_1.setBackground(SWTResourceManager.getColor(SWT.COLOR_TRANSPARENT));
 		varTodayHeartrate_1.setBounds(876, 816, 131, 24);
@@ -392,7 +372,7 @@ public class MainWindow {
 		progressBarTodayHeartrate_1.setBounds(869, 856, 148, 15);
 		
 		Label varTodaySleep_1 = new Label(FitnessTracker, SWT.NONE);
-		varTodaySleep_1.setText("Sleep: 8");
+		varTodaySleep_1.setText("Sleep: N/A");
 		varTodaySleep_1.setFont(SWTResourceManager.getFont("Ubuntu", 15, SWT.NORMAL));
 		varTodaySleep_1.setBackground(SWTResourceManager.getColor(SWT.COLOR_TRANSPARENT));
 		varTodaySleep_1.setBounds(876, 891, 131, 24);
@@ -402,19 +382,19 @@ public class MainWindow {
 		progressBarTodaySleep_1.setBounds(869, 932, 148, 15);
 		
 		Label todayName_2 = new Label(FitnessTracker, SWT.NONE);
-		todayName_2.setText("Today");
-		todayName_2.setFont(SWTResourceManager.getFont("Ubuntu", 30, SWT.NORMAL));
+		todayName_2.setText("6 Days Ago");
+		todayName_2.setFont(SWTResourceManager.getFont("Ubuntu", 20, SWT.NORMAL));
 		todayName_2.setBackground(SWTResourceManager.getColor(SWT.COLOR_TRANSPARENT));
-		todayName_2.setBounds(1674, 636, 115, 60);
+		todayName_2.setBounds(1663, 654, 158, 39);
 		
 		Label varTodayDate_2 = new Label(FitnessTracker, SWT.NONE);
-		varTodayDate_2.setText("Date: April 4th, 2022");
+		varTodayDate_2.setText("Date: N/A");
 		varTodayDate_2.setFont(SWTResourceManager.getFont("Ubuntu", 15, SWT.NORMAL));
 		varTodayDate_2.setBackground(SWTResourceManager.getColor(SWT.COLOR_TRANSPARENT));
 		varTodayDate_2.setBounds(1639, 702, 182, 24);
 		
 		Label varTodaySteps_2 = new Label(FitnessTracker, SWT.NONE);
-		varTodaySteps_2.setText("Steps: 10,000");
+		varTodaySteps_2.setText("Steps: N/A");
 		varTodaySteps_2.setFont(SWTResourceManager.getFont("Ubuntu", 15, SWT.NORMAL));
 		varTodaySteps_2.setBackground(SWTResourceManager.getColor(SWT.COLOR_TRANSPARENT));
 		varTodaySteps_2.setBounds(1663, 737, 131, 24);
@@ -424,7 +404,7 @@ public class MainWindow {
 		progressBarTodaySteps_2.setBounds(1656, 780, 148, 15);
 		
 		Label varTodayHeartrate_2 = new Label(FitnessTracker, SWT.NONE);
-		varTodayHeartrate_2.setText("Heartrate: 80");
+		varTodayHeartrate_2.setText("Heartrate: N/A");
 		varTodayHeartrate_2.setFont(SWTResourceManager.getFont("Ubuntu", 15, SWT.NORMAL));
 		varTodayHeartrate_2.setBackground(SWTResourceManager.getColor(SWT.COLOR_TRANSPARENT));
 		varTodayHeartrate_2.setBounds(1663, 816, 131, 24);
@@ -434,7 +414,7 @@ public class MainWindow {
 		progressBarTodayHeartrate_2.setBounds(1656, 856, 148, 15);
 		
 		Label varTodaySleep_2 = new Label(FitnessTracker, SWT.NONE);
-		varTodaySleep_2.setText("Sleep: 8");
+		varTodaySleep_2.setText("Sleep: N/A");
 		varTodaySleep_2.setFont(SWTResourceManager.getFont("Ubuntu", 15, SWT.NORMAL));
 		varTodaySleep_2.setBackground(SWTResourceManager.getColor(SWT.COLOR_TRANSPARENT));
 		varTodaySleep_2.setBounds(1663, 891, 131, 24);
@@ -444,19 +424,19 @@ public class MainWindow {
 		progressBarTodaySleep_2.setBounds(1656, 932, 148, 15);
 		
 		Label todayName_3 = new Label(FitnessTracker, SWT.NONE);
-		todayName_3.setText("Today");
-		todayName_3.setFont(SWTResourceManager.getFont("Ubuntu", 30, SWT.NORMAL));
+		todayName_3.setText("Yesterday");
+		todayName_3.setFont(SWTResourceManager.getFont("Ubuntu", 20, SWT.NORMAL));
 		todayName_3.setBackground(SWTResourceManager.getColor(SWT.COLOR_TRANSPARENT));
-		todayName_3.setBounds(361, 636, 115, 60);
+		todayName_3.setBounds(348, 654, 142, 39);
 		
 		Label varTodayDate_3 = new Label(FitnessTracker, SWT.NONE);
-		varTodayDate_3.setText("Date: April 4th, 2022");
+		varTodayDate_3.setText("Date: N/A");
 		varTodayDate_3.setFont(SWTResourceManager.getFont("Ubuntu", 15, SWT.NORMAL));
 		varTodayDate_3.setBackground(SWTResourceManager.getColor(SWT.COLOR_TRANSPARENT));
 		varTodayDate_3.setBounds(326, 702, 182, 24);
 		
 		Label varTodaySteps_3 = new Label(FitnessTracker, SWT.NONE);
-		varTodaySteps_3.setText("Steps: 10,000");
+		varTodaySteps_3.setText("Steps: N/A");
 		varTodaySteps_3.setFont(SWTResourceManager.getFont("Ubuntu", 15, SWT.NORMAL));
 		varTodaySteps_3.setBackground(SWTResourceManager.getColor(SWT.COLOR_TRANSPARENT));
 		varTodaySteps_3.setBounds(350, 737, 131, 24);
@@ -466,7 +446,7 @@ public class MainWindow {
 		progressBarTodaySteps_3.setBounds(343, 780, 148, 15);
 		
 		Label varTodayHeartrate_3 = new Label(FitnessTracker, SWT.NONE);
-		varTodayHeartrate_3.setText("Heartrate: 80");
+		varTodayHeartrate_3.setText("Heartrate: N/A");
 		varTodayHeartrate_3.setFont(SWTResourceManager.getFont("Ubuntu", 15, SWT.NORMAL));
 		varTodayHeartrate_3.setBackground(SWTResourceManager.getColor(SWT.COLOR_TRANSPARENT));
 		varTodayHeartrate_3.setBounds(350, 816, 131, 24);
@@ -476,7 +456,7 @@ public class MainWindow {
 		progressBarTodayHeartrate_3.setBounds(343, 856, 148, 15);
 		
 		Label varTodaySleep_3 = new Label(FitnessTracker, SWT.NONE);
-		varTodaySleep_3.setText("Sleep: 8");
+		varTodaySleep_3.setText("Sleep: N/A");
 		varTodaySleep_3.setFont(SWTResourceManager.getFont("Ubuntu", 15, SWT.NORMAL));
 		varTodaySleep_3.setBackground(SWTResourceManager.getColor(SWT.COLOR_TRANSPARENT));
 		varTodaySleep_3.setBounds(350, 891, 131, 24);
@@ -486,19 +466,19 @@ public class MainWindow {
 		progressBarTodaySleep_3.setBounds(343, 932, 148, 15);
 		
 		Label todayName_4 = new Label(FitnessTracker, SWT.NONE);
-		todayName_4.setText("Today");
-		todayName_4.setFont(SWTResourceManager.getFont("Ubuntu", 30, SWT.NORMAL));
+		todayName_4.setText("2 Days Ago");
+		todayName_4.setFont(SWTResourceManager.getFont("Ubuntu", 20, SWT.NORMAL));
 		todayName_4.setBackground(SWTResourceManager.getColor(SWT.COLOR_TRANSPARENT));
-		todayName_4.setBounds(615, 636, 115, 60);
+		todayName_4.setBounds(595, 654, 159, 39);
 		
 		Label varTodayDate_4 = new Label(FitnessTracker, SWT.NONE);
-		varTodayDate_4.setText("Date: April 4th, 2022");
+		varTodayDate_4.setText("Date: N/A");
 		varTodayDate_4.setFont(SWTResourceManager.getFont("Ubuntu", 15, SWT.NORMAL));
 		varTodayDate_4.setBackground(SWTResourceManager.getColor(SWT.COLOR_TRANSPARENT));
 		varTodayDate_4.setBounds(580, 702, 182, 24);
 		
 		Label varTodaySteps_4 = new Label(FitnessTracker, SWT.NONE);
-		varTodaySteps_4.setText("Steps: 10,000");
+		varTodaySteps_4.setText("Steps: N/A");
 		varTodaySteps_4.setFont(SWTResourceManager.getFont("Ubuntu", 15, SWT.NORMAL));
 		varTodaySteps_4.setBackground(SWTResourceManager.getColor(SWT.COLOR_TRANSPARENT));
 		varTodaySteps_4.setBounds(604, 737, 131, 24);
@@ -508,7 +488,7 @@ public class MainWindow {
 		progressBarTodaySteps_4.setBounds(597, 780, 148, 15);
 		
 		Label varTodayHeartrate_4 = new Label(FitnessTracker, SWT.NONE);
-		varTodayHeartrate_4.setText("Heartrate: 80");
+		varTodayHeartrate_4.setText("Heartrate: N/A");
 		varTodayHeartrate_4.setFont(SWTResourceManager.getFont("Ubuntu", 15, SWT.NORMAL));
 		varTodayHeartrate_4.setBackground(SWTResourceManager.getColor(SWT.COLOR_TRANSPARENT));
 		varTodayHeartrate_4.setBounds(604, 816, 131, 24);
@@ -518,7 +498,7 @@ public class MainWindow {
 		progressBarTodayHeartrate_4.setBounds(597, 856, 148, 15);
 		
 		Label varTodaySleep_4 = new Label(FitnessTracker, SWT.NONE);
-		varTodaySleep_4.setText("Sleep: 8");
+		varTodaySleep_4.setText("Sleep: N/A");
 		varTodaySleep_4.setFont(SWTResourceManager.getFont("Ubuntu", 15, SWT.NORMAL));
 		varTodaySleep_4.setBackground(SWTResourceManager.getColor(SWT.COLOR_TRANSPARENT));
 		varTodaySleep_4.setBounds(604, 891, 131, 24);
@@ -528,19 +508,19 @@ public class MainWindow {
 		progressBarTodaySleep_4.setBounds(597, 932, 148, 15);
 		
 		Label todayName_5 = new Label(FitnessTracker, SWT.NONE);
-		todayName_5.setText("Today");
-		todayName_5.setFont(SWTResourceManager.getFont("Ubuntu", 30, SWT.NORMAL));
+		todayName_5.setText("4 Days Ago");
+		todayName_5.setFont(SWTResourceManager.getFont("Ubuntu", 20, SWT.NORMAL));
 		todayName_5.setBackground(SWTResourceManager.getColor(SWT.COLOR_TRANSPARENT));
-		todayName_5.setBounds(1142, 636, 115, 60);
+		todayName_5.setBounds(1124, 654, 164, 39);
 		
 		Label varTodayDate_5 = new Label(FitnessTracker, SWT.NONE);
-		varTodayDate_5.setText("Date: April 4th, 2022");
+		varTodayDate_5.setText("Date: N/A");
 		varTodayDate_5.setFont(SWTResourceManager.getFont("Ubuntu", 15, SWT.NORMAL));
 		varTodayDate_5.setBackground(SWTResourceManager.getColor(SWT.COLOR_TRANSPARENT));
 		varTodayDate_5.setBounds(1107, 702, 182, 24);
 		
 		Label varTodaySteps_5 = new Label(FitnessTracker, SWT.NONE);
-		varTodaySteps_5.setText("Steps: 10,000");
+		varTodaySteps_5.setText("Steps: N/A");
 		varTodaySteps_5.setFont(SWTResourceManager.getFont("Ubuntu", 15, SWT.NORMAL));
 		varTodaySteps_5.setBackground(SWTResourceManager.getColor(SWT.COLOR_TRANSPARENT));
 		varTodaySteps_5.setBounds(1131, 737, 131, 24);
@@ -550,7 +530,7 @@ public class MainWindow {
 		progressBarTodaySteps_5.setBounds(1124, 780, 148, 15);
 		
 		Label varTodayHeartrate_5 = new Label(FitnessTracker, SWT.NONE);
-		varTodayHeartrate_5.setText("Heartrate: 80");
+		varTodayHeartrate_5.setText("Heartrate: N/A");
 		varTodayHeartrate_5.setFont(SWTResourceManager.getFont("Ubuntu", 15, SWT.NORMAL));
 		varTodayHeartrate_5.setBackground(SWTResourceManager.getColor(SWT.COLOR_TRANSPARENT));
 		varTodayHeartrate_5.setBounds(1131, 816, 131, 24);
@@ -560,7 +540,7 @@ public class MainWindow {
 		progressBarTodayHeartrate_5.setBounds(1124, 856, 148, 15);
 		
 		Label varTodaySleep_5 = new Label(FitnessTracker, SWT.NONE);
-		varTodaySleep_5.setText("Sleep: 8");
+		varTodaySleep_5.setText("Sleep: N/A");
 		varTodaySleep_5.setFont(SWTResourceManager.getFont("Ubuntu", 15, SWT.NORMAL));
 		varTodaySleep_5.setBackground(SWTResourceManager.getColor(SWT.COLOR_TRANSPARENT));
 		varTodaySleep_5.setBounds(1131, 891, 131, 24);
@@ -570,19 +550,19 @@ public class MainWindow {
 		progressBarTodaySleep_5.setBounds(1124, 932, 148, 15);
 		
 		Label todayName_6 = new Label(FitnessTracker, SWT.NONE);
-		todayName_6.setText("Today");
-		todayName_6.setFont(SWTResourceManager.getFont("Ubuntu", 30, SWT.NORMAL));
+		todayName_6.setText("5 Days Ago");
+		todayName_6.setFont(SWTResourceManager.getFont("Ubuntu", 20, SWT.NORMAL));
 		todayName_6.setBackground(SWTResourceManager.getColor(SWT.COLOR_TRANSPARENT));
-		todayName_6.setBounds(1420, 636, 115, 60);
+		todayName_6.setBounds(1407, 654, 160, 39);
 		
 		Label varTodayDate_6 = new Label(FitnessTracker, SWT.NONE);
-		varTodayDate_6.setText("Date: April 4th, 2022");
+		varTodayDate_6.setText("Date: N/A");
 		varTodayDate_6.setFont(SWTResourceManager.getFont("Ubuntu", 15, SWT.NORMAL));
 		varTodayDate_6.setBackground(SWTResourceManager.getColor(SWT.COLOR_TRANSPARENT));
 		varTodayDate_6.setBounds(1385, 702, 182, 24);
 		
 		Label varTodaySteps_6 = new Label(FitnessTracker, SWT.NONE);
-		varTodaySteps_6.setText("Steps: 10,000");
+		varTodaySteps_6.setText("Steps: N/A");
 		varTodaySteps_6.setFont(SWTResourceManager.getFont("Ubuntu", 15, SWT.NORMAL));
 		varTodaySteps_6.setBackground(SWTResourceManager.getColor(SWT.COLOR_TRANSPARENT));
 		varTodaySteps_6.setBounds(1409, 737, 131, 24);
@@ -592,7 +572,7 @@ public class MainWindow {
 		progressBarTodaySteps_6.setBounds(1402, 780, 148, 15);
 		
 		Label varTodayHeartrate_6 = new Label(FitnessTracker, SWT.NONE);
-		varTodayHeartrate_6.setText("Heartrate: 80");
+		varTodayHeartrate_6.setText("Heartrate: N/A");
 		varTodayHeartrate_6.setFont(SWTResourceManager.getFont("Ubuntu", 15, SWT.NORMAL));
 		varTodayHeartrate_6.setBackground(SWTResourceManager.getColor(SWT.COLOR_TRANSPARENT));
 		varTodayHeartrate_6.setBounds(1409, 816, 131, 24);
@@ -602,7 +582,7 @@ public class MainWindow {
 		progressBarTodayHeartrate_6.setBounds(1402, 856, 148, 15);
 		
 		Label varTodaySleep_6 = new Label(FitnessTracker, SWT.NONE);
-		varTodaySleep_6.setText("Sleep: 8");
+		varTodaySleep_6.setText("Sleep: N/A");
 		varTodaySleep_6.setFont(SWTResourceManager.getFont("Ubuntu", 15, SWT.NORMAL));
 		varTodaySleep_6.setBackground(SWTResourceManager.getColor(SWT.COLOR_TRANSPARENT));
 		varTodaySleep_6.setBounds(1409, 891, 131, 24);
@@ -610,7 +590,239 @@ public class MainWindow {
 		ProgressBar progressBarTodaySleep_6 = new ProgressBar(FitnessTracker, SWT.NONE);
 		progressBarTodaySleep_6.setSelection(10);
 		progressBarTodaySleep_6.setBounds(1402, 932, 148, 15);
-		//lblNewLabel_2.setText("New Label");
+		
+		Button addNewDataButton = new Button(FitnessTracker, SWT.NONE);
+		addNewDataButton.addSelectionListener(new SelectionAdapter() {
+			@Override
+			public void widgetSelected(SelectionEvent e) {
+				
+				DataInputDialog newWindow = new DataInputDialog(FitnessTracker);
+				newWindow.open();
+				
+				Day day = newWindow.getDay();
+				if (day.getDate()!=null) {
+				averageCalculator.addDay(newWindow.getDay());
+				}
+				
+				try {
+					FileIO.fileWriter("Data.txt", averageCalculator.getDays());
+				} catch (IOException e1) {
+					// TODO Auto-generated catch block
+					e1.printStackTrace();
+				}
+				
+			}
+		});
+		addNewDataButton.setFont(SWTResourceManager.getFont("Ubuntu", 20, SWT.NORMAL));
+		addNewDataButton.setToolTipText("Add new data to the system");
+		addNewDataButton.setBounds(28, 22, 206, 53);
+		addNewDataButton.setText("Add New Data");
+		
+		Button adjustGoalsButton = new Button(FitnessTracker, SWT.NONE);
+		adjustGoalsButton.addSelectionListener(new SelectionAdapter() {
+			@Override
+			public void widgetSelected(SelectionEvent e) {
+				AdjustGoalsDialog newWindow = new AdjustGoalsDialog(FitnessTracker);
+				newWindow.open();
+				Goals = newWindow.getGoals();
+			}
+		});
+		adjustGoalsButton.setToolTipText("Add new data to the system");
+		adjustGoalsButton.setText("Adjust Goals");
+		adjustGoalsButton.setFont(SWTResourceManager.getFont("Ubuntu", 20, SWT.NORMAL));
+		adjustGoalsButton.setBounds(28, 102, 206, 53);
+		
+		Label lblStepsGoal = new Label(FitnessTracker, SWT.NONE);
+		lblStepsGoal.setFont(SWTResourceManager.getFont("Ubuntu", 15, SWT.NORMAL));
+		
+		lblStepsGoal.setBounds(28, 180, 206, 30);
+		
+		Label lblHeartrateGoal = new Label(FitnessTracker, SWT.NONE);
+		lblHeartrateGoal.setFont(SWTResourceManager.getFont("Ubuntu", 15, SWT.NORMAL));
+		lblHeartrateGoal.setBounds(28, 216, 206, 30);
+		
+		Label lblSleepGoal = new Label(FitnessTracker, SWT.NONE);
+		
+		lblSleepGoal.setFont(SWTResourceManager.getFont("Ubuntu", 15, SWT.NORMAL));
+		lblSleepGoal.setBounds(28, 252, 206, 30);
+		
+		Button toggleProgressBars = new Button(FitnessTracker, SWT.NONE);
+		toggleProgressBars.addSelectionListener(new SelectionAdapter() {
+			@Override
+			public void widgetSelected(SelectionEvent e) {
+				
+				if (barDisplay.isBarDisplay()==true) {
+					interfaceRemoteControl.buttonOffPressed();
+				} else {
+					interfaceRemoteControl.buttonOnPressed();
+				}
+				
+			}
+		});
+		toggleProgressBars.setToolTipText("Togglers the Progress Bars");
+		toggleProgressBars.setText("Toggle Bars");
+		toggleProgressBars.setFont(SWTResourceManager.getFont("Ubuntu", 20, SWT.NORMAL));
+		//toggleProgressBars.setBounds(1664, 22, 206, 53);
+		
+		Button exitButton = new Button(FitnessTracker, SWT.NONE);
+		exitButton.addSelectionListener(new SelectionAdapter() {
+			@Override
+			public void widgetSelected(SelectionEvent e) {
+				
+				FitnessTracker.close();
+			}
+		});
+		exitButton.setToolTipText("Togglers the Progress Bars");
+		exitButton.setText("Exit");
+		exitButton.setFont(SWTResourceManager.getFont("Ubuntu", 20, SWT.NORMAL));
+		exitButton.setBounds(1664, 22, 206, 53);
+		
+		DayIteratorClass dayIteratorClass2 = new DayIteratorClass(averageCalculator.getDays());
 
+		Iterator dayIterator2 = dayIteratorClass2.iterator();
+		//java.util.Iterator<Day> arrayListIterartor = dayArrayList.iterator();
+		
+
+		while (dayIterator2.hasLast()) {
+			System.out.println(dayIterator2.last().toString());
+		}
+		
+		
+		while (!FitnessTracker.isDisposed()) {
+			if (!display.readAndDispatch()) {
+				
+				
+				lblStepsGoal.setText("Steps Goal: "+Goals.getSteps());
+				lblHeartrateGoal.setText("Heartrate Goal: "+Goals.getHeartRate());
+				lblSleepGoal.setText("Sleep Goal: "+Goals.getSleep());
+				
+				varWeeklySteps.setText(""+weeklyAverage.getAverageSteps());
+				varMonthlySteps.setText(""+monthlyAverage.getAverageSteps());
+				varYearlySteps.setText(""+yearlyAverage.getAverageSteps());
+				
+				varWeeklySteps_1.setText(""+weeklyAverage.getAverageHeartRate());
+				varMonthlySteps_1.setText(""+monthlyAverage.getAverageHeartRate());
+				varYearlySteps_1.setText(""+yearlyAverage.getAverageHeartRate());
+				
+				varWeeklySteps_2.setText(""+weeklyAverage.getAverageSleep());
+				varMonthlySteps_2.setText(""+monthlyAverage.getAverageSleep());
+				varYearlySteps_2.setText(""+yearlyAverage.getAverageSleep());
+				
+				progressBarWeeklySteps.setSelection((int)(100*((double)weeklyAverage.getAverageSteps()/Goals.getSteps())));
+				progressBarMonthlySteps.setSelection((int)(100*((double)monthlyAverage.getAverageSteps()/Goals.getSteps())));
+				progressBarYearlySteps.setSelection((int)(100*((double)yearlyAverage.getAverageSteps()/Goals.getSteps())));
+				
+				progressBarWeeklySteps_1.setSelection((int)(100*((double)weeklyAverage.getAverageHeartRate()/Goals.getHeartRate())));
+				progressBarMonthlySteps_1.setSelection((int)(100*((double)monthlyAverage.getAverageHeartRate()/Goals.getHeartRate())));
+				progressBarYearlySteps_1.setSelection((int)(100*((double)yearlyAverage.getAverageHeartRate()/Goals.getHeartRate())));
+				
+				progressBarWeeklySteps_2.setSelection((int)(100*((double)weeklyAverage.getAverageSleep()/Goals.getSleep())));
+				progressBarMonthlySteps_2.setSelection((int)(100*((double)monthlyAverage.getAverageSleep()/Goals.getSleep())));
+				progressBarYearlySteps_2.setSelection((int)(100*((double)yearlyAverage.getAverageSleep()/Goals.getSleep())));
+				
+				DayIteratorClass dayIteratorClass = new DayIteratorClass(averageCalculator.getDays());
+
+				Iterator dayIterator = dayIteratorClass.iterator();
+				//java.util.Iterator<Day> arrayListIterartor = dayArrayList.iterator();
+				
+				if (dayIterator.hasLast()) { // Day 1
+					Day day = (Day) dayIterator.last();
+					
+					if (day.getDate()!=null) {
+					SimpleDateFormat simpleDateFormat = new SimpleDateFormat("MMMM dd, yyyy");
+					varTodayDate.setText(simpleDateFormat.format(day.getDate()));
+					}
+					varTodaySteps.setText(""+day.getSteps());
+					varTodayHeartrate.setText(""+day.getHeartRate());
+					varTodaySleep.setText(""+day.getSleep());
+					progressBarTodaySteps.setSelection((int)(100*((double)day.getSteps()/Goals.getSteps())));
+					progressBarTodayHeartrate.setSelection((int)(100*((double)day.getHeartRate()/Goals.getHeartRate())));
+					progressBarTodaySleep.setSelection((int)(100*((double)day.getSleep()/Goals.getSleep())));
+					
+					
+				}
+				if (dayIterator.hasLast()) { // Day 2
+					Day day = (Day) dayIterator.last();
+					if (day.getDate()!=null) {
+					SimpleDateFormat simpleDateFormat = new SimpleDateFormat("MMMM dd, yyyy");
+					varTodayDate_3.setText(simpleDateFormat.format(day.getDate()));
+					}
+					varTodaySteps_3.setText(""+day.getSteps());
+					varTodayHeartrate_3.setText(""+day.getHeartRate());
+					varTodaySleep_3.setText(""+day.getSleep());
+					progressBarTodaySteps_3.setSelection((int)(100*((double)day.getSteps()/Goals.getSteps())));
+					progressBarTodayHeartrate_3.setSelection((int)(100*((double)day.getHeartRate()/Goals.getHeartRate())));
+					progressBarTodaySleep_3.setSelection((int)(100*((double)day.getSleep()/Goals.getSleep())));
+				}
+				if (dayIterator.hasLast()) { // Day 3
+					Day day = (Day) dayIterator.last();
+					if (day.getDate()!=null) {
+					SimpleDateFormat simpleDateFormat = new SimpleDateFormat("MMMM dd, yyyy");
+					varTodayDate_4.setText(simpleDateFormat.format(day.getDate()));
+					}
+					varTodaySteps_4.setText(""+day.getSteps());
+					varTodayHeartrate_4.setText(""+day.getHeartRate());
+					varTodaySleep_4.setText(""+day.getSleep());
+					progressBarTodaySteps_4.setSelection((int)(100*((double)day.getSteps()/Goals.getSteps())));
+					progressBarTodayHeartrate_4.setSelection((int)(100*((double)day.getHeartRate()/Goals.getHeartRate())));
+					progressBarTodaySleep_4.setSelection((int)(100*((double)day.getSleep()/Goals.getSleep())));
+				}
+				if (dayIterator.hasLast()) { // Day 4
+					Day day = (Day) dayIterator.last();
+					if (day.getDate()!=null) {
+					SimpleDateFormat simpleDateFormat = new SimpleDateFormat("MMMM dd, yyyy");
+					varTodayDate_1.setText(simpleDateFormat.format(day.getDate()));
+					}
+					varTodaySteps_1.setText(""+day.getSteps());
+					varTodayHeartrate_1.setText(""+day.getHeartRate());
+					varTodaySleep_1.setText(""+day.getSleep());
+					progressBarTodaySteps_1.setSelection((int)(100*((double)day.getSteps()/Goals.getSteps())));
+					progressBarTodayHeartrate_1.setSelection((int)(100*((double)day.getHeartRate()/Goals.getHeartRate())));
+					progressBarTodaySleep_1.setSelection((int)(100*((double)day.getSleep()/Goals.getSleep())));
+				}
+				if (dayIterator.hasLast()) { // Day 5
+					Day day = (Day) dayIterator.last();
+					if (day.getDate()!=null) {
+					SimpleDateFormat simpleDateFormat = new SimpleDateFormat("MMMM dd, yyyy");
+					varTodayDate_5.setText(simpleDateFormat.format(day.getDate()));
+					}
+					varTodaySteps_5.setText(""+day.getSteps());
+					varTodayHeartrate_5.setText(""+day.getHeartRate());
+					varTodaySleep_5.setText(""+day.getSleep());
+					progressBarTodaySteps_5.setSelection((int)(100*((double)day.getSteps()/Goals.getSteps())));
+					progressBarTodayHeartrate_5.setSelection((int)(100*((double)day.getHeartRate()/Goals.getHeartRate())));
+					progressBarTodaySleep_5.setSelection((int)(100*((double)day.getSleep()/Goals.getSleep())));
+				}
+				if (dayIterator.hasLast()) { // Day 6
+					Day day = (Day) dayIterator.last();
+					if (day.getDate()!=null) {
+					SimpleDateFormat simpleDateFormat = new SimpleDateFormat("MMMM dd, yyyy");
+					varTodayDate_6.setText(simpleDateFormat.format(day.getDate()));
+					}
+					varTodaySteps_6.setText(""+day.getSteps());
+					varTodayHeartrate_6.setText(""+day.getHeartRate());
+					varTodaySleep_6.setText(""+day.getSleep());
+					progressBarTodaySteps_6.setSelection((int)(100*((double)day.getSteps()/Goals.getSteps())));
+					progressBarTodayHeartrate_6.setSelection((int)(100*((double)day.getHeartRate()/Goals.getHeartRate())));
+					progressBarTodaySleep_6.setSelection((int)(100*((double)day.getSleep()/Goals.getSleep())));
+				}
+				if (dayIterator.hasLast()) { // Day 7
+					Day day = (Day) dayIterator.last();
+					if (day.getDate()!=null) {
+					SimpleDateFormat simpleDateFormat = new SimpleDateFormat("MMMM dd, yyyy");
+					varTodayDate_2.setText(simpleDateFormat.format(day.getDate()));
+					}
+					varTodaySteps_2.setText(""+day.getSteps());
+					varTodayHeartrate_2.setText(""+day.getHeartRate());
+					varTodaySleep_2.setText(""+day.getSleep());
+					progressBarTodaySteps_2.setSelection((int)(100*((double)day.getSteps()/Goals.getSteps())));
+					progressBarTodayHeartrate_2.setSelection((int)(100*((double)day.getHeartRate()/Goals.getHeartRate())));
+					progressBarTodaySleep_2.setSelection((int)(100*((double)day.getSleep()/Goals.getSleep())));
+				}
+				
+				
+				//display.sleep();
+			}
+		}
 	}
 }

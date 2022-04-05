@@ -38,7 +38,7 @@ public class DayBuilder {
 		return date;
 	}
 	public DayBuilder setDate(String string) throws ParseException {
-		this.date = new SimpleDateFormat("dd/MM/yyyy").parse(string);
+		this.date = new SimpleDateFormat("yyyy/MM/dd").parse(string);
 		return this;
 	}
 	

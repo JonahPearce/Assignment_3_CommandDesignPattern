@@ -32,7 +32,14 @@ public class FileIO {
 		} catch (Exception e) {
 			System.out.println("No file");
 			
-		}
+		}		
+		//DayBuilder dayBuilderGoals = new DayBuilder();
+		
+		//dayBuilderGoals.setSteps(10000).setHeartRate(80).setSleep(8.0);
+
+		//dayArrayList.add(dayBuilderGoals.buildDay());
+		
+		
 		return dayArrayList;
 	}
 	
